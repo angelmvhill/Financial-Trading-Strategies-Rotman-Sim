@@ -182,7 +182,8 @@ def main():
                 if ticker * 0.01 <= (bid_A - price + alt_mkt_fee) or ticker * 0.01 <= (bid_M - price + primary_mkt_fee):
                     
                     # accept tender order if 1% margin is exceeded or met
-                    s.post('http://localhost:9999/v1/tenders/{order_id}', params={'id': 'order_id'})
+                    # s.post('http://localhost:9999/v1/tenders/{order_id}', params={'id': 'order_id'})
+                    s.post('http://localhost:9999/v1/tenders', params={'id': tender_dict['tender_id']})
 
                     # request share quantity in portfolio for ticker
                     portfolio = s.get('http://localhost:9999/v1/assets/history', params={'ticker': ticker})

@@ -59,7 +59,7 @@ def main():
             if vwap[-1] > daily_vwap[-2] * 1.1:
                 
                 # gets current ask from Rotman API - unsure how to parse json output to get the  ask - I believe limiting the request to 1 will send the most recent ask
-                current_ask = s.get('http://localhost:9999/v1/securities/book', params={'ticker': 'PTON', 'limit': 1})
+                current_ask = s.get('http://localhost:9999/v1/securities/book', params={'ticker': 'PTON', 'limit': 1})  
                 
                 # if the current asking price is less than vwap, place a market order
                 # this will allow us to place quick trades when the price is "cheap" and save on transaction cost by placing market instead of limit orders
