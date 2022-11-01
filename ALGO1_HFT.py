@@ -92,24 +92,37 @@ def main():
             else:
                 quantity2 = CRZY_M_bid_quantity
 
+            threshold = .02
+            quantity_percent = .5
+
             # algorithm decision rule: arbitrage between markets
-            if CRZY_A_bid_price > CRZY_M_ask_price:
+            if CRZY_A_bid_price > CRZY_M_ask_price + threshold:
                 # market orders
                 # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'MARKET', 'quantity': quantity1, 'action': 'BUY'})
                 # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'MARKET', 'quantity': quantity1, 'action': 'SELL'})
 
                 # limit orders (performed better)
-                s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'LIMIT', 'price': CRZY_M_ask_price, 'quantity': quantity1, 'action': 'BUY'})
-                s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'LIMIT', 'price': CRZY_A_bid_price, 'quantity': quantity1, 'action': 'SELL'})
+                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'LIMIT', 'price': CRZY_M_ask_price, 'quantity': quantity1 * quantity_percent, 'action': 'BUY'})
+                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'LIMIT', 'price': CRZY_A_bid_price, 'quantity': quantity1 * quantity_percent, 'action': 'SELL'})
 
-            if CRZY_M_bid_price > CRZY_A_ask_price:
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'MARKET', 'quantity': quantity1 * quantity_percent, 'action': 'BUY'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'MARKET', 'quantity': quantity1 * quantity_percent, 'action': 'SELL'})
+
+                sleep(.25)
+
+            if CRZY_M_bid_price > CRZY_A_ask_price + threshold:
                 # market orders
                 # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'MARKET', 'quantity': quantity2, 'action': 'BUY'})
                 # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'MARKET', 'quantity': quantity2, 'action': 'SELL'})
 
                 # limit orders (performed better)
-                s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'LIMIT', 'price': CRZY_A_ask_price, 'quantity': quantity2, 'action': 'BUY'})
-                s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'LIMIT', 'price': CRZY_M_bid_price, 'quantity': quantity2, 'action': 'SELL'})
+                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'LIMIT', 'price': CRZY_A_ask_price, 'quantity': quantity2 * quantity_percent, 'action': 'BUY'})
+                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'LIMIT', 'price': CRZY_M_bid_price, 'quantity': quantity2 * quantity_percent, 'action': 'SELL'})
+
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'MARKET', 'quantity': quantity2 * quantity_percent, 'action': 'BUY'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'MARKET', 'quantity': quantity2 * quantity_percent, 'action': 'SELL'})
+
+                sleep(.25)
 
             '''
             Ways to Improve:
@@ -119,6 +132,9 @@ def main():
             - Create functions for processes within the algo and add to a HelperFunction() class
             - Send market making orders at a smaller size than limit order size to account for other HFT players
             '''
+
+            # add bottom fishing orders
+            # adjust trade position based on length of order book (liqudity trading)
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
