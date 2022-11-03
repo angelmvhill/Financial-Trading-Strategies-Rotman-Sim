@@ -51,6 +51,7 @@ def ticker_close(session, ticker):
 #     session.post('http://localhost:9999/v1/orders', params=buy_payload)
 #     session.post('http://localhost:9999/v1/orders', params=sell_payload)
 
+# this function calculates the spread between the algo's bid and ask based on order book depth
 def calc_spread_cushion(order_books_stats):
     bid_vol = order_books_stats['Cumulative Vol Bid']
     ask_vol = order_books_stats['Cumulative Vol Ask']
@@ -60,10 +61,12 @@ def calc_spread_cushion(order_books_stats):
 
     return price_cushion_factor
 
+# this function submits a buy order
 def buy_order(session, ticker, quantity, price, price_cushion):
     buy_param = {'ticker': ticker, 'type': 'LIMIT', 'quantity': quantity, 'action': 'BUY', 'price': price + (price * price_cushion)}
     session.post('http://localhost:9999/v1/orders', params = buy_param)
 
+# this function submits a sell order
 def sell_order(session, ticker, quantity, price, price_cushion):
     buy_param = {'ticker': ticker, 'type': 'LIMIT', 'quantity': quantity, 'action': 'SELL', 'price': price + (price * price_cushion)}
     session.post('http://localhost:9999/v1/orders', params = buy_param)
@@ -73,6 +76,7 @@ def sell_order(session, ticker, quantity, price, price_cushion):
 
 # def get_ask():
 
+# this function fetches the bid and ask prices of a given ticker
 def ticker_bid_ask(session, ticker):
     payload = {'ticker': ticker}
     resp = session.get('http://localhost:9999/v1/securities/book', params=payload)
@@ -90,6 +94,7 @@ def get_orders(session, status):
     orders = resp.json()
     return orders
 
+# this function calculates a smooth moving average for n periods
 def mov_avg(session, price):
     array = []
     array.append(price)
@@ -113,9 +118,11 @@ def mov_avg(session, price):
 
     return mov_avg_num
 
+# this function liquidates the entire portfolio
 def liquidate_portfolio():
     pass
 
+# this function calculates summary statistic on the order book
 def get_order_book_stats(session, ticker, limit):
 
     orders = session.get('http://localhost:9999/v1/securities/book', params={'ticker': ticker, 'limit': limit})
@@ -166,6 +173,7 @@ def main():
         while 3 <= tick <= 300:
             tick = get_tick(s)
 
+            # fetch data via API to feed to algorithm
             close = ticker_close(s, 'ALGO')
             sma = mov_avg(s, close)
             order_book_stats = get_order_book_stats(s, 'ALGO', 100)
@@ -179,7 +187,7 @@ def main():
 
                 price_factor = calc_spread_cushion(get_order_book_stats(s, 'ALGO', 100))
 
-                # submit a pair of orders and update your order book
+                # submit a pair of orders biased towards the long side if liquidity is stronger on the buy side
                 if price_factor >= 0:
                     sell_order(s, 'ALGO', 2000, bid_ask[1] + .02, 0)
                     buy_order(s, 'ALGO', 2000, bid_ask[0] - .02, price_factor)
@@ -187,6 +195,7 @@ def main():
                     print(orders)
                     sleep(.25)
 
+                # submit a pair of orders biased towards the sell side if liquidity is stronger on the sell side
                 if price_factor < 0:
                     sell_order(s, 'ALGO', 2000, bid_ask[1] + .02, price_factor)
                     buy_order(s, 'ALGO', 2000, bid_ask[0] - .02, 0)
