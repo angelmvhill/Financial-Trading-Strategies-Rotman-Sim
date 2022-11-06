@@ -187,52 +187,56 @@ def main():
             algo_close = ticker_close(s, 'ALGO')
             position = get_position(s, 'ALGO')
 
-            # liquidate portfolio and cancel all orders if portfolio is not neutral for longer than 3 seconds
-            if position > 0:
-                sleep(5)
-                position = int(position)
-                s.post('http://localhost:9999/v1/commands/cancel?all=1')
-                sleep(.25)
-                s.post('http://localhost:9999/v1/commands/orders', params={'ticker': 'ALGO', 'type': 'MARKET', 'quantity': position, 'action': 'SELL'})
-                print(position)
+            s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close, 'quantity': 500, 'action': 'SELL'})
+            s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close, 'quantity': 500, 'action': 'BUY'})
+            sleep(1)
 
-            if position < 0:
-                # cannot send negative position orders
-                position = position * -1
-                sleep(5)
-                s.post('http://localhost:9999/v1/commands/cancel?all=1')
-                sleep(.25)
-                position = int(position)
-                s.post('http://localhost:9999/v1/commands/orders', params={'ticker': 'ALGO', 'type': 'MARKET', 'quantity': position, 'action': 'BUY'})
+            # # liquidate portfolio and cancel all orders if portfolio is not neutral for longer than 3 seconds
+            # if position > 0:
+            #     sleep(5)
+            #     position = int(position)
+            #     s.post('http://localhost:9999/v1/commands/cancel?all=1')
+            #     sleep(.25)
+            #     s.post('http://localhost:9999/v1/commands/orders', params={'ticker': 'ALGO', 'type': 'MARKET', 'quantity': position, 'action': 'SELL'})
+            #     print(position)
 
-            if position == 0:
-                # check if you have 0 open orders   
-                if len(orders) == 0:
-                    bid_ask = ticker_bid_ask(s, 'ALGO')
-                    print(bid_ask)
+            # if position < 0:
+            #     # cannot send negative position orders
+            #     position = position * -1
+            #     sleep(5)
+            #     s.post('http://localhost:9999/v1/commands/cancel?all=1')
+            #     sleep(.25)
+            #     position = int(position)
+            #     s.post('http://localhost:9999/v1/commands/orders', params={'ticker': 'ALGO', 'type': 'MARKET', 'quantity': position, 'action': 'BUY'})
 
-                    price_factor = calc_spread_cushion(get_order_book_stats(s, 'ALGO', 100))
+            # if position == 0:
+            #     # check if you have 0 open orders   
+            #     if len(orders) == 0:
+            #         bid_ask = ticker_bid_ask(s, 'ALGO')
+            #         print(bid_ask)
 
-                    # submit a pair of orders biased towards the long side if liquidity is stronger on the buy side
-                    if price_factor >= 0:
-                        sell_order(s, 'ALGO', 2000, bid_ask[1], 0)
-                        buy_order(s, 'ALGO', 2000, bid_ask[0], price_factor)
-                        orders = get_orders(s, 'OPEN')
-                        print(orders)
-                        sleep(.25)
+            #         price_factor = calc_spread_cushion(get_order_book_stats(s, 'ALGO', 100))
 
-                    # submit a pair of orders biased towards the sell side if liquidity is stronger on the sell side
-                    if price_factor < 0:
-                        sell_order(s, 'ALGO', 2000, bid_ask[1], price_factor)
-                        buy_order(s, 'ALGO', 2000, bid_ask[0], 0)
-                        orders = get_orders(s, 'OPEN')
-                        print(orders)
-                        sleep(1)
-                        
-            # additional strategy ideas
-                # buy and sell at the same price to collect rebates
-                # add bottom fishing orders
-                # adjust trade position based on length of order book (liqudity trading)
+            #         # submit a pair of orders biased towards the long side if liquidity is stronger on the buy side
+            #         if price_factor >= 0:
+            #             sell_order(s, 'ALGO', 2000, bid_ask[1], 0)
+            #             buy_order(s, 'ALGO', 2000, bid_ask[0], price_factor)
+            #             orders = get_orders(s, 'OPEN')
+            #             print(orders)
+            #             sleep(.25)
+
+            #         # submit a pair of orders biased towards the sell side if liquidity is stronger on the sell side
+            #         if price_factor < 0:
+            #             sell_order(s, 'ALGO', 2000, bid_ask[1], price_factor)
+            #             buy_order(s, 'ALGO', 2000, bid_ask[0], 0)
+            #             orders = get_orders(s, 'OPEN')
+            #             print(orders)
+            #             sleep(1)
+
+            # # additional strategy ideas
+            # #     buy and sell at the same price to collect rebates
+            # #     add bottom fishing orders
+            # #     adjust trade position based on length of order book (liqudity trading)
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
