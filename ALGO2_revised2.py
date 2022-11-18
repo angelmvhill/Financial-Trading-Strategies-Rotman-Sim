@@ -6,7 +6,7 @@ from time import sleep
 import signal
 import requests
 import pandas as pd
-import pandas_ta as ta
+#import pandas_ta as ta
 import re
 import json
 
@@ -160,12 +160,18 @@ def get_order_book_stats(session, ticker, limit):
         # else:
         #     del asks[i]
 
-    dict = {'Cumulative Vol Bid': bid_cumulative_volume,
+    order_totals = {'Cumulative Vol Bid': bid_cumulative_volume,
             'Bid Num of Orders': bid_number_of_orders,
             'Cumulative Vol Ask': ask_cumulative_volume,
             'Ask Num of Orders': ask_number_of_orders,}
 
-    return dict
+    bid_vol = order_totals['Cumulative Vol Bid']
+    bid_order = order_totals['Bid Num of Orders']
+    ask_vol = order_totals['Cumulative Vol Ask']
+    ask_order = order_totals['Ask Num of Orders']
+    return order_totals, bid_vol, bid_order, ask_vol, ask_order
+
+
 
 # this is the main method containing the actual order routing logic
 def main():
@@ -173,27 +179,121 @@ def main():
     with requests.Session() as s:
         # add the API key to the session to authenticate during requests
         s.headers.update(API_KEY)
+        t = 'ALGO'
         # get the current time of the case
         tick = get_tick(s)
-        
-        while 3 <= tick <= 300:
+       
+        while 8 <= tick <= 300:
             tick = get_tick(s)
-
+            
             # fetch data via API to feed to algorithm
-            close = ticker_close(s, 'CNR')
+            
+            resp = s.get('http://localhost:9999/v1/securities/book', params={'ticker': t, 'limit': 100})
+            orders = resp.json()
+            
+            my_orders = (orders['bids']['trader_id'])
+            print(my_orders)
+            print(len(my_orders))
+            close = ticker_close(s, 'ALGO')
             sma = mov_avg(s, close)
-            order_book_stats = get_order_book_stats(s, 'CNR', 100)
-            orders = get_orders(s, 'OPEN')
-            algo_close = ticker_close(s, 'CNR')
-            bid_ask = ticker_bid_ask(s, 'CNR')
-            bid = bid_ask[0]
-            ask = bid_ask[1]
+            order_book_stats = get_order_book_stats(s, 'ALGO', 100)
+            #print(order_book_stats)
+            #print(type(order_book_stats))
 
-            position = get_position(s, 'CNR')
+            bid_order = order_book_stats[1]
+            bid_vol = order_book_stats[2]
+            ask_vol = order_book_stats[4]
+            ask_order = order_book_stats[3]
+            
+            algo_close = ticker_close(s, 'ALGO')
+            position = get_position(s, 'ALGO')
+            ask_bid_voldif = ask_vol - bid_vol
+            print(ask_bid_voldif)
+            bid_order_voldif = bid_vol - ask_vol
+            if position >= -20000 and 15000 < ask_bid_voldif >0:
+                sleep(1)
+                if len(orders) < 14:               
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close + 0.05, 'quantity': 2000, 'action': 'SELL'})
+                
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close + 0.07, 'quantity': 2000, 'action': 'SELL'})
+                
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close - 0.01, 'quantity': 2000, 'action': 'BUY'})
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close - 0.02, 'quantity': 2000, 'action': 'BUY'})
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close + 0.04, 'quantity': 2000, 'action': 'SELL'})
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close - 0.02, 'quantity': 2000, 'action': 'BUY'})
 
-            s.post('http://localhost:9999/v1/orders', params={'ticker': 'CNR', 'type': 'LIMIT', 'price': algo_close, 'quantity': 500, 'action': 'SELL'})
-            s.post('http://localhost:9999/v1/orders', params={'ticker': 'CNR', 'type': 'LIMIT', 'price': algo_close, 'quantity': 500, 'action': 'BUY'})
-            sleep(1)
+                
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close + 0.04, 'quantity': 2000, 'action': 'SELL'})
+                
+
+                
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close + 0.06, 'quantity': 2000, 'action': 'BUY'})
+                    sleep(2)
+                
+                
+            if 15000 < bid_order_voldif > 0 and position <= 20000 and len(orders) < 14:
+                sleep(1)
+                if len(orders) < 14:
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close - 0.04, 'quantity': 2000, 'action': 'BUY'})
+                
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close - 0.05, 'quantity': 2000, 'action': 'BUY'})
+                
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close + 0.01, 'quantity': 2000, 'action': 'SELL'})
+                
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close - 0.06, 'quantity': 2000, 'action': 'BUY'})
+                
+
+                
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close - 0.07, 'quantity': 2000, 'action': 'BUY'})
+        
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close + 0.02, 'quantity': 2000, 'action': 'SELL'})
+                
+                    s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close + 0.03, 'quantity': 2000, 'action': 'SELL'})
+                    sleep(2)
+           # if len(orders['bids']['trader_id']) == '123':
+                
+            
+            #      s.post('http://localhost:9999/v1/commands/cancel?all=1')
+            
+
+            if position <= -10000:
+                s.post('http://localhost:9999/v1/commands/cancel?all=1')
+                
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close  , 'quantity': 2000, 'action': 'BUY'})
+                
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close , 'quantity': 2000, 'action': 'BUY'})
+                
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close + 0.01, 'quantity': 2000, 'action': 'BUY'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close , 'quantity': 2000, 'action': 'BUY'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close , 'quantity': 2000, 'action': 'BUY'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close + 0.01, 'quantity': 2000, 'action': 'BUY'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close + 0.01, 'quantity':2000, 'action': 'BUY'})
+                
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close - 0.02, 'quantity': 2000, 'action': 'BUY'})
+               
+
+
+            if position >= 10000:
+                s.post('http://localhost:9999/v1/commands/cancel?all=1')
+                
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close , 'quantity': 2000, 'action': 'SELL'})
+                
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close , 'quantity': 2000, 'action': 'SELL'})
+                
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close , 'quantity':2000, 'action': 'SELL'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close , 'quantity': 2000, 'action': 'SELL'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close , 'quantity': 2000, 'action': 'SELL'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close - 0.01, 'quantity': 2000, 'action': 'SELL'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close - 0.01, 'quantity': 2000, 'action': 'SELL'})
+                
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close , 'quantity': 2000, 'action': 'SELL'})
+
+            
+            #orders = get_orders(s, 'OPEN')
+           
+            #s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close, 'quantity': 500, 'action': 'SELL'})
+            #s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'LIMIT', 'price': algo_close, 'quantity': 500, 'action': 'BUY'})
+            #sleep(1)
 
             # # liquidate portfolio and cancel all orders if portfolio is not neutral for longer than 3 seconds
             # if position > 0:

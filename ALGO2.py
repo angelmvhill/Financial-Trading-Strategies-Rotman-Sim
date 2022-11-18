@@ -56,7 +56,7 @@ def calc_spread_cushion(order_books_stats):
     bid_vol = order_books_stats['Cumulative Vol Bid']
     ask_vol = order_books_stats['Cumulative Vol Ask']
 
-    reduction_factor = 20
+    reduction_factor = 10
     price_cushion_factor = (bid_vol - ask_vol) / ask_vol / reduction_factor
 
     return price_cushion_factor
@@ -145,8 +145,8 @@ def get_order_book_stats(session, ticker, limit):
     for i in bids:
         if i['trader_id'] == 'ANON':
 
-            bid_cumulative_volume += 1
-            bid_number_of_orders += i['quantity']
+            bid_cumulative_volume += i['quantity']
+            bid_number_of_orders += 1
 
         # else:
         #     del bids[i]
@@ -154,8 +154,8 @@ def get_order_book_stats(session, ticker, limit):
     for i in asks:
         if i['trader_id'] == 'ANON':
 
-            ask_cumulative_volume += 1
-            ask_number_of_orders += i['quantity']
+            ask_cumulative_volume += i['quantity']
+            ask_number_of_orders += 1
 
         # else:
         #     del asks[i]
@@ -163,7 +163,7 @@ def get_order_book_stats(session, ticker, limit):
     dict = {'Cumulative Vol Bid': bid_cumulative_volume,
             'Bid Num of Orders': bid_number_of_orders,
             'Cumulative Vol Ask': ask_cumulative_volume,
-            'Ask Num of Orders': ask_number_of_orders,}
+            'Ask Num of Orders': ask_number_of_orders}
 
     return dict
 
@@ -183,17 +183,19 @@ def main():
             close = ticker_close(s, 'ALGO')
             sma = mov_avg(s, close)
             order_book_stats = get_order_book_stats(s, 'ALGO', 100)
+            print(order_book_stats['Cumulative Vol Bid'])
+            sleep(1)
             orders = get_orders(s, 'OPEN')
             algo_close = ticker_close(s, 'ALGO')
             position = get_position(s, 'ALGO')
 
-            # liquidate portfolio and cancel all orders if portfolio is not neutral for longer than 3 seconds
+            # liquidate portfolio and cancel all orders if portfolio is not neutral for longer than 7 seconds
             if position > 0:
-                sleep(5)
+                sleep(7)
                 position = int(position)
                 s.post('http://localhost:9999/v1/commands/cancel?all=1')
                 sleep(.25)
-                s.post('http://localhost:9999/v1/commands/orders', params={'ticker': 'ALGO', 'type': 'MARKET', 'quantity': position, 'action': 'SELL'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'MARKET', 'quantity': position, 'action': 'SELL'})
                 print(position)
 
             if position < 0:
@@ -203,7 +205,7 @@ def main():
                 s.post('http://localhost:9999/v1/commands/cancel?all=1')
                 sleep(.25)
                 position = int(position)
-                s.post('http://localhost:9999/v1/commands/orders', params={'ticker': 'ALGO', 'type': 'MARKET', 'quantity': position, 'action': 'BUY'})
+                s.post('http://localhost:9999/v1/orders', params={'ticker': 'ALGO', 'type': 'MARKET', 'quantity': position, 'action': 'BUY'})
 
             if position == 0:
                 # check if you have 0 open orders   
@@ -228,11 +230,13 @@ def main():
                         orders = get_orders(s, 'OPEN')
                         print(orders)
                         sleep(1)
-                        
+
             # additional strategy ideas
                 # buy and sell at the same price to collect rebates
                 # add bottom fishing orders
-                # adjust trade position based on length of order book (liqudity trading)
+                # try placing trades in oposite direction
+                # submit more orders
+                # increase spread
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
