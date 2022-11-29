@@ -75,13 +75,19 @@ def main():
         tick = get_tick(s)
        
         while 0 <= tick <= 601:
+
+            quantity = 99
+
             # RENT STORAGE
-            for i in range(3):
-                s.post('http://localhost:9999/v1/leases', params = {'ticker': 'CL-STORAGE', 'from':'CONTAINER', 'quantity': 3})
+            for i in range(10):
+                s.post('http://localhost:9999/v1/leases', params = {'ticker': 'CL-STORAGE', 'from': 'CONTAINER'})
                 sleep(.1)
 
             # BUY OIL
-            s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL', 'type': 'MARKET', 'quantity': 30, 'action': 'BUY'})
+            x = s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL', 'type': 'MARKET', 'quantity': quantity, 'action': 'BUY'})
+            # s.post(f'http://localhost:9999/v1/orders?ticker=CL&type=MARKET&quantity={quantity}&action=BUY')
+            # x = s.post(f'http://localhost:9999/v1/orders?ticker=CL&type=MARKET&quantity={quantity}&action=BUY')
+            print(x)
             sleep(.1)
 
             # OIL FUTURE
@@ -90,25 +96,28 @@ def main():
             # print(oil_future)
 
             if oil_future == 'CL-1F':
-                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-1F', 'type': 'MARKET', 'quantity': 30, 'action': 'SELL'})
+                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-1F', 'type': 'MARKET', 'quantity': quantity, 'action': 'SELL'})
             ### THIS LINE IS NOT WORKING (BELOW)
             # can we choose when to buy and sell the future to lock in profit???
             else:
-                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-2F', 'type': 'MARKET', 'quantity': 30, 'action': 'SELL'})
+                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-2F', 'type': 'MARKET', 'quantity': quantity, 'action': 'SELL'})
 
             # USE REFINERY
-            # leases = session.get('http://localhost:9999/v1/leases')
+            leases = s.get('http://localhost:9999/v1/leases')
 
-            # for i in leases.json():
-            #     if i['ticker'] == 'CL-REFINERY':
-            #         refinery_id = i['id']
-            # print(refinery_id)
+            refinery_id = -1
 
-            # # session.get('http://localhost:9999/v1/leases/{}', params = {'ticker': 'CL-REFINERY', 'from': 'CL', 'quantity': 30, 'id': refinery_id})
+            for i in leases.json():
+                if i['ticker'] == 'CL-REFINERY':
+                    refinery_id = i['id']
 
-            # # session.get('http://localhost:9999/v1/leases/{}'.format(refinery_id))
+            if refinery_id == -1:
+                s.post('http://localhost:9999/v1/leases', params = {'ticker': 'CL-REFINERY', 'from':'CONTAINER', 'quantity': quantity})
+                for i in leases.json():
+                    if i['ticker'] == 'CL-REFINERY':
+                        refinery_id = i['id']
 
-            # session.get('http://localhost:9999/v1/leases/{}'.format(refinery_id), params = {'ticker': 'CL-REFINERY', 'from1': 'CL', 'quantity1': 30})
+            s.post(f'http://localhost:9999/v1/leases/{refinery_id}?from1=CL&quantity1={quantity}')
 
             # GET RB AND HO POSITIONS
             ho_position = 0
