@@ -88,6 +88,8 @@ def main():
                     ak_pipe_price = i['lease_price']
                 if i['ticker'] == 'CS-NYC-PIPE':
                     nyc_pipe_price = i['lease_price']
+            # print(f'nyc pipe price = {nyc_pipe_price}')
+            # print(f'ak pipe price = {ak_pipe_price}')
 
             # get oil prices
             cl_price = ticker_close(s, 'CL')
@@ -97,65 +99,101 @@ def main():
             get_cl_1f = s.get('http://localhost:9999/v1/securities', params = {'ticker': 'CL-1F'})
             cl_1f_price = get_cl_1f.json()[0]['ask']
             cl_2f_price = ticker_close(s, 'CL-2F')
-            print(cl_1f_price)
+            # print(cl_1f_price)
 
-            if cl_nyc_price > cl_price - nyc_pipe_price:
+            if cl_nyc_price * 1000 * 10 > cl_price * 1000 * 10 + nyc_pipe_price + 10000:
                 
                 # RENT STORAGE
-                for i in range(5):
+                for i in range(3):
                     s.post('http://localhost:9999/v1/leases', params = {'ticker': 'CL-STORAGE', 'from': 'CONTAINER'})
                     sleep(.1)
 
+                # get position and calculate net position to determine whether to buy oil first or futures
+
                 # BUY OIL
-                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL', 'type': 'MARKET', 'quantity': 50, 'action': 'BUY'})
+                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL', 'type': 'MARKET', 'quantity': 30, 'action': 'BUY'})
 
                 # BUY FUTURE
                 if cl_1f_price > 0:
-                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-1F', 'type': 'MARKET', 'quantity': 50, 'action': 'SELL'})
+                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-1F', 'type': 'MARKET', 'quantity': 30, 'action': 'SELL'})
                 else:
-                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-2F', 'type': 'MARKET', 'quantity': 50, 'action': 'SELL'})
+                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-2F', 'type': 'MARKET', 'quantity': 30, 'action': 'SELL'})
 
-                # BUY PIPELINE
-                s.post('http://localhost:9999/v1/leases', params = {'ticker': 'CS-NYC-PIPE', 'from': 'PIPELINE'})
+                # LEASE AND USE PIPELINE
+                # s.post('http://localhost:9999/v1/leases', params = {'ticker': 'CS-NYC-PIPE', 'from': 'PIPELINE'})
+                s.post('http://localhost:9999/v1/leases?ticker=CS-NYC-PIPE&from1=CL&quantity1=10')
+                sleep(.2)
+                s.post('http://localhost:9999/v1/leases?ticker=CS-NYC-PIPE&from1=CL&quantity1=10')
+                sleep(.2)
+                s.post('http://localhost:9999/v1/leases?ticker=CS-NYC-PIPE&from1=CL&quantity1=10')
 
-                # USE PIPELINE
+                # # USE PIPELINE
+                # leases = s.get('http://localhost:9999/v1/leases')
+
+                # pipeline_id = -1
+
+                # for i in leases.json():
+                #     if i['ticker'] == 'CS-NYC-PIPE':
+                #         pipeline_id = i['id']
+
+                # if pipeline_id == -1:
+                #     s.post('http://localhost:9999/v1/leases', params = {'ticker': 'CS-NYC-PIPE', 'from':'PIPELINE', 'quantity': 30})
+                #     for i in leases.json():
+                #         if i['ticker'] == 'CS-NYC-PIPE':
+                #             pipeline_id = i['id']
+
+                # s.post(f'http://localhost:9999/v1/leases/{pipeline_id}?from1=CL&quantity1=30')
+
+                # CANCEL STORAGE
+
                 leases = s.get('http://localhost:9999/v1/leases')
 
-                pipeline_id = -1
+                storage_id = -1
 
                 for i in leases.json():
-                    if i['ticker'] == 'CS-NYC-PIPE':
-                        pipeline_id = i['id']
+                    if i['ticker'] == 'CL-STORAGE':
+                        storage_id = i['id']
+                        print(f'{storage_id} (storage ID) is being cancelled...')
+                        s.delete(f'http://localhost:9999/v1/leases/{storage_id}')
+                        sleep(.25)
 
-                if pipeline_id == -1:
-                    s.post('http://localhost:9999/v1/leases', params = {'ticker': 'CS-NYC-PIPE', 'from':'PIPELINE', 'quantity': 50})
-                    for i in leases.json():
-                        if i['ticker'] == 'CS-NYC-PIPE':
-                            pipeline_id = i['id']
+                cl_nyc_position = 0
 
-                s.post(f'http://localhost:9999/v1/leases/{pipeline_id}?from1=CL&quantity1=50')
-
-                sleep(31)
+                while cl_nyc_position == 0:
+                    cl_nyc = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-NYC'})
+                    if cl_nyc.json()[0]['position'] != 0.0:
+                        cl_nyc_position = cl_nyc.json()[0]['position']
+                    print('getting CL-NYC position')
+                    sleep(1)
 
                 # SELL NYC AND FUTURE POSITION
 
-                # cl_nyc = session.get('http://localhost:9999/v1/securities', params = {'ticker': 'CL-NYC'})
-                # cl_nyc_position = cl_nyc.json()[0]['position']
-                # if cl_nyc_position
-
-                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL_NYC', 'type': 'MARKET', 'quantity': 50, 'action': 'SELL'})
+                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-NYC', 'type': 'MARKET', 'quantity': 30, 'action': 'SELL'})
                 
                 cl_1f = s.get('http://localhost:9999/v1/securities', params = {'ticker': 'CL-1F'})
                 cl_1f_position = cl_1f.json()[0]['position']
                 cl_2f = s.get('http://localhost:9999/v1/securities', params = {'ticker': 'CL-2F'})
                 cl_2f_position = cl_2f.json()[0]['position']
 
-                if cl_1f_position > 0:
-                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-1F', 'type': 'MARKET', 'quantity': cl_1f_position, 'action': 'BUY'})
-                if cl_2f_position > 0:
-                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-2F', 'type': 'MARKET', 'quantity': cl_2f_position, 'action': 'BUY'})
+                if cl_1f_position != 0:
+                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-1F', 'type': 'MARKET', 'quantity': -cl_1f_position, 'action': 'BUY'})
+                if cl_2f_position != 0:
+                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-2F', 'type': 'MARKET', 'quantity': -cl_2f_position, 'action': 'BUY'})
 
-            if cl_price + 1000000 > cl_ak_price - ak_pipe_price:
+                # CANCEL NYC STORAGE
+
+                leases = s.get('http://localhost:9999/v1/leases')
+
+                storage_id = -1
+
+                for i in leases.json():
+                    if i['ticker'] == 'NYC-STORAGE':
+                        storage_id = i['id']
+                        print(f'{storage_id} (storage ID) is being cancelled...')
+                        s.delete(f'http://localhost:9999/v1/leases/{storage_id}')
+                        sleep(.25)
+
+            if cl_price * 1000 * 10 > cl_ak_price * 1000 * 10 + ak_pipe_price + 10000:
                 
                 # RENT STORAGE
                 for i in range(5):
@@ -163,53 +201,91 @@ def main():
                     sleep(.1)
 
                 # BUY OIL
-                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-AK', 'type': 'MARKET', 'quantity': 50, 'action': 'BUY'})
+                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-AK', 'type': 'MARKET', 'quantity': 30, 'action': 'BUY'})
 
                 # BUY FUTURE
                 if cl_1f_price > 0:
-                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-1F', 'type': 'MARKET', 'quantity': 50, 'action': 'SELL'})
+                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-1F', 'type': 'MARKET', 'quantity': 30, 'action': 'SELL'})
                 else:
-                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-2F', 'type': 'MARKET', 'quantity': 50, 'action': 'SELL'})
+                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-2F', 'type': 'MARKET', 'quantity': 30, 'action': 'SELL'})
 
-                # BUY PIPELINE
-                s.post('http://localhost:9999/v1/leases', params = {'ticker': 'AK-CS-PIPE', 'from': 'PIPELINE'})
+                # LEASE AND USE PIPELINE
+                # s.post('http://localhost:9999/v1/leases', params = {'ticker': 'AK-CS-PIPE', 'from': 'PIPELINE'})
+                s.post('http://localhost:9999/v1/leases?ticker=AK-CS-PIPE&from1=CL-AK&quantity1=10')
+                sleep(.2)
+                s.post('http://localhost:9999/v1/leases?ticker=AK-CS-PIPE&from1=CL-AK&quantity1=10')
+                sleep(.2)
+                s.post('http://localhost:9999/v1/leases?ticker=AK-CS-PIPE&from1=CL-AK&quantity1=10')
 
-                # USE PIPELINE
+                # # USE PIPELINE
+                # leases = s.get('http://localhost:9999/v1/leases')
+
+                # pipeline_id = -1
+
+                # for i in leases.json():
+                #     if i['ticker'] == 'AK-CS-PIPE':
+                #         pipeline_id = i['id']
+
+                # if pipeline_id == -1:
+                #     s.post('http://localhost:9999/v1/leases', params = {'ticker': 'AK-CS-PIPE', 'from':'PIPELINE', 'quantity': 30})
+                #     for i in leases.json():
+                #         if i['ticker'] == 'AK-CS-PIPE':
+                #             pipeline_id = i['id']
+
+                # s.post(f'http://localhost:9999/v1/leases/{pipeline_id}?from1=CL&quantity1=30')
+
+                # CANCEL STORAGE
+
                 leases = s.get('http://localhost:9999/v1/leases')
 
-                pipeline_id = -1
+                storage_id = -1
 
                 for i in leases.json():
-                    if i['ticker'] == 'AK-CS-PIPE':
-                        pipeline_id = i['id']
+                    if i['ticker'] == 'AK-STORAGE':
+                        storage_id = i['id']
+                        print(f'{storage_id} (storage ID) is being cancelled...')
+                        s.delete(f'http://localhost:9999/v1/leases/{storage_id}')
+                        sleep(.25)
 
-                if pipeline_id == -1:
-                    s.post('http://localhost:9999/v1/leases', params = {'ticker': 'AK-CS-PIPE', 'from':'PIPELINE', 'quantity': 50})
-                    for i in leases.json():
-                        if i['ticker'] == 'AK-CS-PIPE':
-                            pipeline_id = i['id']
+                cl_position = 0
 
-                s.post(f'http://localhost:9999/v1/leases/{pipeline_id}?from1=CL&quantity1=50')
+                while cl_position == 0:
+                    cl = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL'})
+                    if cl.json()[0]['position'] != 0.0:
+                        cl_position = cl.json()[0]['position']
+                    print('getting CL position')
+                    sleep(1)
 
-                sleep(31)
 
-                # SELL NYC AND FUTURE POSITION
+                # SELL NYC-CL AND FUTURE POSITION
 
                 # cl_nyc = session.get('http://localhost:9999/v1/securities', params = {'ticker': 'CL-NYC'})
                 # cl_nyc_position = cl_nyc.json()[0]['position']
                 # if cl_nyc_position
 
-                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL', 'type': 'MARKET', 'quantity': 50, 'action': 'SELL'})
+                s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL', 'type': 'MARKET', 'quantity': 30, 'action': 'SELL'})
                 
                 cl_1f = s.get('http://localhost:9999/v1/securities', params = {'ticker': 'CL-1F'})
                 cl_1f_position = cl_1f.json()[0]['position']
                 cl_2f = s.get('http://localhost:9999/v1/securities', params = {'ticker': 'CL-2F'})
                 cl_2f_position = cl_2f.json()[0]['position']
 
-                if cl_1f_position > 0:
-                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-1F', 'type': 'MARKET', 'quantity': cl_1f_position, 'action': 'BUY'})
-                if cl_2f_position > 0:
-                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-2F', 'type': 'MARKET', 'quantity': cl_2f_position, 'action': 'BUY'})
+                if cl_1f_position != 0:
+                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-1F', 'type': 'MARKET', 'quantity': -cl_1f_position, 'action': 'BUY'})
+                if cl_2f_position != 0:
+                    s.post('http://localhost:9999/v1/orders', params = {'ticker': 'CL-2F', 'type': 'MARKET', 'quantity': -cl_2f_position, 'action': 'BUY'})
+
+                # CANCEL CL STORAGE
+                leases = s.get('http://localhost:9999/v1/leases')
+
+                storage_id = -1
+
+                for i in leases.json():
+                    if i['ticker'] == 'CL-STORAGE':
+                        storage_id = i['id']
+                        print(f'{storage_id} (storage ID) is being cancelled...')
+                        s.delete(f'http://localhost:9999/v1/leases/{storage_id}')
+                        sleep(.25)
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
