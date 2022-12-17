@@ -196,7 +196,7 @@ def main():
             if cl_price * 1000 * 10 > cl_ak_price * 1000 * 10 + ak_pipe_price + 10000:
                 
                 # RENT STORAGE
-                for i in range(5):
+                for i in range(3):
                     s.post('http://localhost:9999/v1/leases', params = {'ticker': 'AK-STORAGE'})
                     sleep(.1)
 

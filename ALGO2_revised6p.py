@@ -284,7 +284,7 @@ def main():
            # if len(orders['bids']['trader_id']) == '123':
                 
             
-            #      s.post('http://localhost:9999/v1/commands/cancel?all=1')
+                #  s.post('http://localhost:9999/v1/commands/cancel?all=1')
 
             order_len = len(orders)
 
