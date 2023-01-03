@@ -81,12 +81,12 @@ def main():
         
         while 5 <= tick <= 300:
             
+            # get the current bid and ask for the security
             orders = get_orders(s, 'OPEN')
                 
+            # submit orders if there are less than 12 open orders
+            # these orders are placed at key locations to provide liquidity at a premium when it dries up
             if len(orders) < 12:
-                # s.post('http://localhost:9999/commands/cancel', params={'all': 1, 'ticker': 'CRZY'})
-                # s.post('http://localhost:9999/commands/cancel', params={'all': 1, 'ticker': 'TAME'})
-                # s.post('http://localhost:9999/commands/cancel', params={'all': 1, 'ticker': 'BBSN'})
 
                 s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY', 'type': 'LIMIT', 'quantity': 5000, 'action': 'SELL', 'price': 35.00})
                 s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY', 'type': 'LIMIT', 'quantity': 5000, 'action': 'SELL', 'price': 25.00})
@@ -104,7 +104,6 @@ def main():
                 s.post('http://localhost:9999/v1/orders', params={'ticker': 'TAME', 'type': 'LIMIT', 'quantity': 5000, 'action': 'BUY', 'price': 14.00})
                 s.post('http://localhost:9999/v1/orders', params={'ticker': 'TAME', 'type': 'LIMIT', 'quantity': 5000, 'action': 'BUY', 'price': 12.00})
                 s.post('http://localhost:9999/v1/orders', params={'ticker': 'TAME', 'type': 'LIMIT', 'quantity': 5000, 'action': 'BUY', 'price': 10.00})
-                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'TAME', 'type': 'LIMIT', 'quantity': 5000, 'action': 'BUY', 'price': 10.00})
 
                 s.post('http://localhost:9999/v1/orders', params={'ticker': 'BBSN', 'type': 'LIMIT', 'quantity': 5000, 'action': 'SELL', 'price': 100.00})
                 s.post('http://localhost:9999/v1/orders', params={'ticker': 'BBSN', 'type': 'LIMIT', 'quantity': 5000, 'action': 'SELL', 'price': 90.00})

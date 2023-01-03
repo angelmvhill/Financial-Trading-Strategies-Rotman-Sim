@@ -98,13 +98,6 @@ def main():
             # algorithm decision rule: arbitrage between markets
             if CRZY_A_bid_price > CRZY_M_ask_price + threshold:
                 # market orders
-                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'MARKET', 'quantity': quantity1, 'action': 'BUY'})
-                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'MARKET', 'quantity': quantity1, 'action': 'SELL'})
-
-                # limit orders (performed better)
-                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'LIMIT', 'price': CRZY_M_ask_price, 'quantity': quantity1 * quantity_percent, 'action': 'BUY'})
-                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'LIMIT', 'price': CRZY_A_bid_price, 'quantity': quantity1 * quantity_percent, 'action': 'SELL'})
-
                 s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'MARKET', 'quantity': quantity1 * quantity_percent, 'action': 'BUY'})
                 s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'MARKET', 'quantity': quantity1 * quantity_percent, 'action': 'SELL'})
 
@@ -112,13 +105,6 @@ def main():
 
             if CRZY_M_bid_price > CRZY_A_ask_price + threshold:
                 # market orders
-                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'MARKET', 'quantity': quantity2, 'action': 'BUY'})
-                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'MARKET', 'quantity': quantity2, 'action': 'SELL'})
-
-                # limit orders (performed better)
-                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'LIMIT', 'price': CRZY_A_ask_price, 'quantity': quantity2 * quantity_percent, 'action': 'BUY'})
-                # s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'LIMIT', 'price': CRZY_M_bid_price, 'quantity': quantity2 * quantity_percent, 'action': 'SELL'})
-
                 s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_A', 'type': 'MARKET', 'quantity': quantity2 * quantity_percent, 'action': 'BUY'})
                 s.post('http://localhost:9999/v1/orders', params={'ticker': 'CRZY_M', 'type': 'MARKET', 'quantity': quantity2 * quantity_percent, 'action': 'SELL'})
 

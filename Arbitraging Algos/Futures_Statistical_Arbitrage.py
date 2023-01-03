@@ -115,15 +115,6 @@ def main():
 
                             print('Liquidated position')
 
-                            # cl1f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-1F'})
-                            # if cl1f.json()[0]['position'] == 0.0:
-                            #     cl1f_position = cl1f.json()[0]['position']
-                            # cl2f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-2F'})
-                            # if cl2f.json()[0]['position'] == 0.0:
-                            #     cl2f_position = cl2f.json()[0]['position']
-                            # print('getting CL1F and CL2F position')
-                            # break
-
                             # BREAK WHILE LOOP WHEN POSITIONS == 0
 
                             cl1f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-1F'})
@@ -164,15 +155,6 @@ def main():
                                     sleep(.1)
 
                                     print('Liquidated position')
-
-                                    # cl1f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-1F'})
-                                    # if cl1f.json()[0]['position'] == 0.0:
-                                    #     cl1f_position = cl1f.json()[0]['position']
-                                    # cl2f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-2F'})
-                                    # if cl2f.json()[0]['position'] == 0.0:
-                                    #     cl2f_position = cl2f.json()[0]['position']
-                                    #     break
-                                    # print('getting CL1F and CL2F position')
 
                                     # BREAK WHILE LOOP WHEN POSITIONS == 0
 
@@ -217,14 +199,6 @@ def main():
 
                                             print('Liquidated position')
 
-                                            # cl1f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-1F'})
-                                            # if cl1f.json()[0]['position'] == 0.0:
-                                            #     cl1f_position = cl1f.json()[0]['position']
-                                            # cl2f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-2F'})
-                                            # if cl2f.json()[0]['position'] == 0.0:
-                                            #     cl2f_position = cl2f.json()[0]['position']
-                                            # print('getting CL1F and CL2F position')
-
                                             # BREAK WHILE LOOP WHEN POSITIONS == 0
 
                                             cl1f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-1F'})
@@ -232,8 +206,6 @@ def main():
                                             if cl1f.json()[0]['position'] == 0.0:
                                                 if cl2f.json()[0]['position'] == 0.0:
                                                     break
-
-                # print('Exited Loop 1')
 
                 # SUBMIT ARBITRAGE TRADE IS CL1F AND CL2F HAVE A $1.30 SPREAD
                 if cl_2f_price - cl_1f_price > 1.3:
@@ -267,14 +239,6 @@ def main():
                             sleep(.1)
 
                             print('Liquidated position')
-
-                            # cl1f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-1F'})
-                            # if cl1f.json()[0]['position'] == 0.0:
-                            #     cl1f_position = cl1f.json()[0]['position']
-                            # cl2f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-2F'})
-                            # if cl2f.json()[0]['position'] == 0.0:
-                            #     cl2f_position = cl2f.json()[0]['position']
-                            # print('getting CL1F and CL2F position')
 
                             # BREAK WHILE LOOP WHEN POSITIONS == 0
 
@@ -316,14 +280,6 @@ def main():
                                     sleep(.1)
 
                                     print('Liquidated position')
-
-                                    # cl1f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-1F'})
-                                    # if cl1f.json()[0]['position'] == 0.0:
-                                    #     cl1f_position = cl1f.json()[0]['position']
-                                    # cl2f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-2F'})
-                                    # if cl2f.json()[0]['position'] == 0.0:
-                                    #     cl2f_position = cl2f.json()[0]['position']
-                                    # print('getting CL1F and CL2F position')
 
                                     # BREAK WHILE LOOP WHEN POSITIONS == 0
 
@@ -370,14 +326,6 @@ def main():
 
                                             print('Liquidated position')
 
-                                            # cl1f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-1F'})
-                                            # if cl1f.json()[0]['position'] == 0.0:
-                                            #     cl1f_position = cl1f.json()[0]['position']
-                                            # cl2f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-2F'})
-                                            # if cl2f.json()[0]['position'] == 0.0:
-                                            #     cl2f_position = cl2f.json()[0]['position']
-                                            # print('getting CL1F and CL2F position')
-
                                             # BREAK WHILE LOOP WHEN POSITIONS == 0
 
                                             cl1f = s.get('http://localhost:9999/v1/securities', params={'ticker': 'CL-1F'})
@@ -385,8 +333,6 @@ def main():
                                             if cl1f.json()[0]['position'] == 0.0:
                                                 if cl2f.json()[0]['position'] == 0.0:
                                                     break
-
-                # print('Exited Loop 2')
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)

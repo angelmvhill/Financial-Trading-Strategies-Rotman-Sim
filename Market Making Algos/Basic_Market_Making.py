@@ -43,14 +43,7 @@ def ticker_close(session, ticker):
         return ticker_history[0]['close']
     else:
         raise ApiException('Response error. Unexpected JSON response.')
-
-# this helper method submits a pair of limit orders to buy and sell VOLUME of each security, at the last price +/- SPREAD
-# def buy_sell(session, to_buy, to_sell, last):
-#     buy_payload = {'ticker': to_buy, 'type': 'LIMIT', 'quantity': BUY_VOLUME, 'action': 'BUY', 'price': last - SPREAD}
-#     sell_payload = {'ticker': to_sell, 'type': 'LIMIT', 'quantity': SELL_VOLUME, 'action': 'SELL', 'price': last + SPREAD}
-#     session.post('http://localhost:9999/v1/orders', params=buy_payload)
-#     session.post('http://localhost:9999/v1/orders', params=sell_payload)
-
+        
 # this function calculates the spread between the algo's bid and ask based on order book depth
 def calc_spread_cushion(order_books_stats):
     bid_vol = order_books_stats['Cumulative Vol Bid']
@@ -70,11 +63,6 @@ def buy_order(session, ticker, quantity, price, price_cushion):
 def sell_order(session, ticker, quantity, price, price_cushion):
     buy_param = {'ticker': ticker, 'type': 'LIMIT', 'quantity': quantity, 'action': 'SELL', 'price': price + (price * price_cushion)}
     session.post('http://localhost:9999/v1/orders', params = buy_param)
-
-# def get_bid():
-#     8
-
-# def get_ask():
 
 # this function fetches the bid and ask prices of a given ticker
 def ticker_bid_ask(session, ticker):
@@ -107,8 +95,6 @@ def mov_avg(session, price):
             sum += i
 
     mov_avg_num = sum/sma_period
-
-    # ema12 = (array.apply(lambda x: x.ewm(span=12, adjust=False).mean()))
 
     if len(array) > 12:
         del array[:-11]
@@ -148,17 +134,11 @@ def get_order_book_stats(session, ticker, limit):
             bid_cumulative_volume += i['quantity']
             bid_number_of_orders += 1
 
-        # else:
-        #     del bids[i]
-
     for i in asks:
         if i['trader_id'] == 'ANON':
 
             ask_cumulative_volume += i['quantity']
             ask_number_of_orders += 1
-
-        # else:
-        #     del asks[i]
 
     dict = {'Cumulative Vol Bid': bid_cumulative_volume,
             'Bid Num of Orders': bid_number_of_orders,
@@ -230,13 +210,6 @@ def main():
                         orders = get_orders(s, 'OPEN')
                         print(orders)
                         sleep(1)
-
-            # additional strategy ideas
-                # buy and sell at the same price to collect rebates
-                # add bottom fishing orders
-                # try placing trades in oposite direction
-                # submit more orders
-                # increase spread
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
